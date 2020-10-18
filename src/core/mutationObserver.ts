@@ -1,6 +1,6 @@
 import { getDefaultState, Mutation } from './mutation'
 import { notifyManager } from './notifyManager'
-import type { QueryClient } from './queryClient'
+import type { Environment } from './environment'
 import type {
   MutateOptions,
   MutationObserverResult,
@@ -24,7 +24,7 @@ export class MutationObserver<
 > {
   options!: MutationObserverOptions<TData, TError, TVariables, TContext>
 
-  private client: QueryClient
+  private environment: Environment
   private currentResult!: MutationObserverResult<
     TData,
     TError,
@@ -40,10 +40,10 @@ export class MutationObserver<
   >[]
 
   constructor(
-    client: QueryClient,
+    environment: Environment,
     options: MutationObserverOptions<TData, TError, TVariables, TContext>
   ) {
-    this.client = client
+    this.environment = environment
     this.listeners = []
     this.setOptions(options)
 
@@ -58,7 +58,7 @@ export class MutationObserver<
   setOptions(
     options?: MutationObserverOptions<TData, TError, TVariables, TContext>
   ) {
-    this.options = this.client.defaultMutationOptions(options)
+    this.options = this.environment.defaultMutationOptions(options)
   }
 
   subscribe(
@@ -112,11 +112,13 @@ export class MutationObserver<
       this.currentMutation.removeObserver(this)
     }
 
-    this.currentMutation = this.client.getMutationCache().build(this.client, {
-      ...this.options,
-      ...options,
-      variables: variables ?? this.options.variables,
-    })
+    this.currentMutation = this.environment
+      .getMutationCache()
+      .build(this.environment, {
+        ...this.options,
+        ...options,
+        variables: variables ?? this.options.variables,
+      })
 
     this.currentMutation.addObserver(this)
 
